@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from telegram.ext import ApplicationBuilder
 
 from commands import register_command_handlers
+from timers import register_timer_handlers
 
 
 def main():
