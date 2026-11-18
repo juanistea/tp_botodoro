@@ -1,4 +1,4 @@
-from telegram.ext import MessageHandler, filters
+from telegram.ext import CommandHandler, MessageHandler, filters
 
 # Temporizadores activos.
 # La clave es (chat_id, user_id) y el valor es el job programado en JobQueue.
@@ -17,7 +17,7 @@ async def start_timer(update, context):
 
     if key in active_timers:
         await update.message.reply_text(
-            "Ya tienes un temporizador activo. Espera a que termine."
+            "Ya tienes un temporizador activo. Usa /cancel antes de iniciar otro."
         )
         return
 
@@ -27,7 +27,7 @@ async def start_timer(update, context):
 
     await update.message.reply_text(
         f"⏱ Temporizador de enfoque de {minutes} minutos iniciado. "
-        "¡A concentrarse!"
+        "¡A concentrarse! Usa /cancel para detenerlo."
     )
 
 
@@ -40,7 +40,20 @@ async def timer_finished(context):
     await context.bot.send_message(chat_id=chat_id, text="🔔 ¡Temporizador terminado! Buen trabajo.")
 
 
+async def cancel_command(update, context):
+    key = get_key(update)
+
+    if key not in active_timers:
+        await update.message.reply_text("No tienes ningún temporizador activo.")
+        return
+
+    job = active_timers.pop(key)
+    job.schedule_removal()
+    await update.message.reply_text("⏹ Temporizador cancelado.")
+
+
 def register_timer_handlers(application):
     # /5, /15 y /25 empiezan con un número, por eso los recibimos como mensajes
     # y usamos una expresión regular para reconocerlos.
     application.add_handler(MessageHandler(filters.Regex(r"^/(5|15|25)\b"), start_timer))
+    application.add_handler(CommandHandler("cancel", cancel_command))
