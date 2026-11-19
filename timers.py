@@ -1,5 +1,7 @@
 from telegram.ext import CommandHandler, MessageHandler, filters
 
+from stats import record_timer
+
 # Temporizadores activos.
 # La clave es (chat_id, user_id) y el valor es el job programado en JobQueue.
 active_timers = {}
@@ -33,9 +35,10 @@ async def start_timer(update, context):
 
 async def timer_finished(context):
     key, minutes = context.job.data
-    chat_id = key[0]
+    chat_id, user_id = key
 
     active_timers.pop(key, None)
+    record_timer(chat_id, user_id, minutes)
 
     await context.bot.send_message(chat_id=chat_id, text="🔔 ¡Temporizador terminado! Buen trabajo.")
 
